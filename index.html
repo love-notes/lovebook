@@ -653,7 +653,7 @@ overflow-y: auto;
     </div>
 
     <!-- Audio Element -->
-    <audio id="bgAudio" loop preload="none">
+<audio id="bgAudio" loop preload="auto">
         <source src="season.mp3" type="audio/mpeg">
     </audio>
 
@@ -744,16 +744,26 @@ element.appendChild(currentP);
 }
 
         // ===== AUDIO MANAGEMENT =====
-        function initAudio() {
-            if (!audioInitialized) {
-                audio.volume = 0.5;
-                audio.play().catch(() => {
-                    console.log('Audio autoplay prevented by browser');
-                });
+function initAudio() {
+    if (audioInitialized) return;
+
+    audio.volume = 0.5;
+
+    const playPromise = audio.play();
+
+    if (playPromise !== undefined) {
+        playPromise
+            .then(() => {
                 audioInitialized = true;
                 audioPlaying = true;
-            }
-        }
+            })
+            .catch(() => {
+                // retry saat user interaction berikutnya
+                console.log('Retrying audio on next interaction...');
+                audioInitialized = false;
+            });
+    }
+}
 
         // ===== PAGE NAVIGATION =====
         function goToPage(pageNum) {
@@ -859,6 +869,11 @@ photos.forEach((src, index) => {
         document.addEventListener('touchstart', function() {
             initAudio();
         }, { once: true });
+        
+        // Fallback click 
+document.addEventListener('click', () => {
+    initAudio();
+}, { once: true });
 
         // Prevent long-press context menu
         document.addEventListener('contextmenu', (e) => {
